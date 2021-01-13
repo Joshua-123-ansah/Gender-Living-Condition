@@ -1,0 +1,120 @@
+---
+title: "Project"
+author: "Joshua Owusu Ansah"
+date: "11/3/2020"
+output: word_document
+---
+
+**Research Question: Is there an association between gender and the living condition of persons in a country**
+
+Explanatory Variable: Gender(categorical).
+
+Response Variable:Living condition of persons(categorical).
+## 1. Load data set(s) and libraries
+```{r setup, message=FALSE}
+library(readr)
+load("gha_r7_2018.RData")
+library(descr)
+library(stats)
+```
+
+
+## 2. Create variable subset
+```{r}
+vars=c("URBRUR","Q4B","Q101")
+my_data=gha_r7_data[vars]
+```
+
+
+## 3. Data management I: check for and recode errors and NAs
+```{r}
+freq(my_data$URBRUR)
+freq(my_data$Q4B)
+freq(my_data$Q101)
+my_data$Q4B[my_data$Q4B==9 | my_data$Q4B==-1 | my_data$Q4B==8 | my_data$Q4B==3]<-NA
+freq(my_data$Q4B)
+```
+
+
+## 4. Data management II: further subset and create secondary variable
+```{r}
+my_data$URBRUR[my_data$URBRUR==1]<- "Urban"
+my_data$URBRUR[my_data$URBRUR==2]<- "Rural"
+freq(my_data$URBRUR)
+
+my_data$livingCondition<-rep(NA,nrow(my_data))
+my_data$livingCondition[my_data$Q4B==1 | my_data$Q4B==2]<-"Bad"
+my_data$livingCondition[my_data$Q4B==4 | my_data$Q4B==5]<-"Good"
+
+freq(my_data$livingCondition)
+my_data$Q101[my_data$Q101==1]<-"Males"
+my_data$Q101[my_data$Q101==2]<-"Females"
+freq(my_data$Q101)
+```
+
+## 5. Descriptive statistics (sample means, standard deviations, proportions) and univariate displays
+```{r}
+freq(my_data$URBRUR,main="The histogram shows the percentage \n of respondent who lives in rural areas \n and those in urban areas",names=c("Rural","Urban"),ylab="Number of respondent",xlab="Province",col="blue",ylim=c(0,60),y.axis="percent")
+
+freq(my_data$livingCondition,main="The current living condition of respondent \n living in the country",names=c("Bad","Good"),ylab="Number of respondent",xlab="Perceptions",col="orange",ylim=c(0,60),y.axis="percent")
+freq(my_data$Q101,main="Gender of respondents",names=c("Males","Females"),ylim=c(0,60),ylab="Frequency",xlab="Gender",col="green",y.axis="percent")
+```
+With regards to the living condition of the respondents, 52.07% of them said their living conditions is bad, 37.46% said theirs is good and 10.47% also said theirs is neutral/neither good nor bad. Notwithstanding among the respondent, 50.21% are females and 49.79% are males. This imply that, approximately there is an equal representation of men and women.  45.67% of the respondent live in the rural area and 54.33% are in the urban areas. 
+
+
+## 6. Bivariate tables and graphs
+```{r}
+tab1=table(my_data$livingCondition,my_data$Q101);tab1
+tab1_colProp=prop.table(tab1,2)
+round(tab1_colProp,4)
+barplot(tab1_colProp[1, ],ylim = c(0,0.6),main = "Proportion of respondent who said \n their living standard is bad.",ylab = "Proportion",xlab = "Various categories of living condition",col = "tomato")
+```
+Among those who said their living standard is good, 35% are females and 40% are males. 
+
+## 7. Moderation by gender
+```{r}
+tbl=ftable(my_data$Q101~my_data$livingCondition+my_data$URBRUR);tbl
+proportion_tab=round(prop.table(tbl,2),2);proportion_tab
+barplot(proportion_tab[3:4, ],beside=TRUE,ylim = c(0,0.3),col = c("blue","red"),main = "Moderation by geographical area of respondents \n who said their living condition is good",xlab = "Gender of respondent splited by geographical area",ylab = "Proportion")
+legend(x=1,y=0.3,legend = c("Rural","Urban"),fill = c("blue","red"))
+```
+Among those who said their living condition is good, for those in Rural areas, 13% are females and 16% are males. That notwithstanding, for those in Urban areas, 22% are females and 24% are males. This shows that in both rural areas and urban centers men turn to have a better living condition than women. 
+
+
+
+
+### Project Assign 4
+
+## 6. Bivariate tables and graphs
+```{r}
+tab1=table(my_data$livingCondition,my_data$Q101)  
+tab1_colProp=prop.table(tab1,2)
+round(tab1_colProp,4)
+round(tab1,4)
+barplot(tab1_colProp[2, ],ylim = c(0,0.5),main = "The proportion of respondent who said \n their living standard is good.",ylab = "Proportion",xlab = "Various categories of living condition",col = "tomato")
+```
+
+### CHI SQUARE TEST
+```{r}
+chisq=chisq.test(my_data$livingCondition,my_data$Q101)
+chisq
+chisq$expected
+chisq$observed
+chisq$residuals
+```
+
+### Section 8
+```{r}
+# For those who said their living condition is good. 
+tbl=ftable(my_data$Q101~my_data$livingCondition+my_data$URBRUR);tbl
+proportion_tab=round(prop.table(tbl,2),2);proportion_tab
+barplot(proportion_tab[3:4, ],beside=TRUE,ylim = c(0,0.3),col = c("blue","red"),main = "Moderation by geographical area of respondents \n who said their living condition is good",xlab = "Gender of respondent splited by geographical area",ylab = "Proportion",names.arg = c("Rural","Urban"))
+legend(x=1,y=0.3,legend = c("Female","Male"),fill = c("blue","red"))
+
+
+# For those who said their living condition is bad. 
+tbl=ftable(my_data$Q101~my_data$livingCondition+my_data$URBRUR);tbl
+proportion_tab=round(prop.table(tbl,2),2);proportion_tab
+barplot(proportion_tab[1:2, ],beside=TRUE,ylim = c(0,0.4),col = c("grey","yellow"),main = "Moderation by geographical area of respondents \n who said their living condition is bad",xlab = "Gender of respondent splited by geographical area",ylab = "Proportion",names.arg = c("Rural","Urban"))
+legend(x=1,y=0.4,legend = c("Female","Male"),fill = c("grey","yellow"))
+```
